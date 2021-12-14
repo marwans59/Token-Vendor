@@ -60,7 +60,7 @@ const { ethers } = require("ethers");
 */
 
 /// 📡 What chain are your contracts deployed to?
-const targetNetwork = NETWORKS.localhost; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
+const targetNetwork = NETWORKS.goerli; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
 const DEBUG = true;
@@ -484,7 +484,9 @@ function App(props) {
   }
 
   const buyTokensEvents = useEventListener(readContracts, "Vendor", "BuyTokens", localProvider, 1);
+  const sellTokensEvents = useEventListener(readContracts, "Vendor", "SellTokens", localProvider, 2);
   console.log("📟 buyTokensEvents:", buyTokensEvents);
+  console.log("📟 sellTokensEvents:", sellTokensEvents);
 
   const [tokenBuyAmount, setTokenBuyAmount] = useState();
   const [tokenSellAmount, setTokenSellAmount] = useState();
@@ -500,6 +502,9 @@ function App(props) {
 
   const ethCostToPurchaseTokens =
     tokenBuyAmount && tokensPerEth && ethers.utils.parseEther("" + tokenBuyAmount / parseFloat(tokensPerEth));
+
+  const ethCostToSellTokens = 
+  tokenSellAmount && tokensPerEth &&  ethers.utils.parseEther("" + tokenSellAmount / parseFloat(tokensPerEth));
   console.log("ethCostToPurchaseTokens:", ethCostToPurchaseTokens);
 
   const [tokenSendToAddress, setTokenSendToAddress] = useState();
@@ -621,13 +626,10 @@ function App(props) {
               </Card>
             </div>
 
-            /*
-            //Extra UI for buying the tokens back from the user using "approve" and "sellTokens"
             <Divider />
             <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
               <Card title="Sell Tokens">
                 <div style={{ padding: 8 }}>{tokensPerEth && tokensPerEth.toNumber()} tokens per ETH</div>
-
                 <div style={{ padding: 8 }}>
                   <Input
                     style={{ textAlign: "center" }}
@@ -637,10 +639,9 @@ function App(props) {
                       setTokenSellAmount(e.target.value);
                     }}
                   />
-                  <Balance balance={ethCostToPurchaseTokens} dollarMultiplier={price} />
+                  <Balance balance={ethCostToSellTokens} dollarMultiplier={price} />
                 </div>
                 {isSellAmountApproved?
-
                   <div style={{ padding: 8 }}>
                     <Button
                       type={"primary"}
@@ -669,12 +670,9 @@ function App(props) {
                     </Button>
                   </div>
                 }
-
-
               </Card>
             </div>
 
-            */
 
             <div style={{ padding: 8, marginTop: 32 }}>
               <div>Vendor Token Balance:</div>
@@ -698,6 +696,23 @@ function App(props) {
                       ETH to get
                       <Balance balance={item.args[2]} />
                       Tokens
+                    </List.Item>
+                  );
+                }}
+              />
+            </div>
+            <div style={{ width: 500, margin: "auto", marginTop: 64 }}>
+              <div>Sell Token Events:</div>
+              <List
+                dataSource={sellTokensEvents}
+                renderItem={item => {
+                  return (
+                    <List.Item key={item.blockNumber + item.blockHash}>
+                      <Address value={item.args[0]} ensProvider={mainnetProvider} fontSize={16} /> sold
+                      <Balance balance={item.args[2]} />
+                      Tokens to get
+                      <Balance balance={item.args[1]} />
+                      Eth
                     </List.Item>
                   );
                 }}
